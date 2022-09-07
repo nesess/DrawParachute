@@ -21,7 +21,7 @@ public class Line : MonoBehaviour
 
     private bool CanAppend(Vector3 pos)
     {
-        if(_renderer.positionCount == 0) //if first point always return true
+        if(_renderer.positionCount == 0) // first point always return true
         {
             return true;
         }
