@@ -33,13 +33,20 @@ public class DrawManager : MonoBehaviour, IPointerDownHandler,IPointerUpHandler,
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        StopDrawing();
+        if(_currentLine != null)
+        {
+            StopDrawing();
+        }
+        
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
 
-        StopDrawing();
+         if(_currentLine != null)
+        {
+            StopDrawing();
+        }
     }
 
     private void StopDrawing()
@@ -68,22 +75,28 @@ public class DrawManager : MonoBehaviour, IPointerDownHandler,IPointerUpHandler,
         if(_drawing)
         {
             Vector3 mousePos = Input.mousePosition;
-            mousePos.z = 10;
+            mousePos.z = -_cam.transform.position.z;
+            
             mousePos = _cam.ScreenToWorldPoint(mousePos);
+          
 
 
 
             if (Input.GetMouseButtonDown(0))
             {
                 _spawning = false;
-                
-                _currentLine = Instantiate(_linePrefab, mousePos, Quaternion.identity);
+                Vector3 spawnPos = Vector3.zero;
+                spawnPos.z = -_cam.transform.position.z;
+                _currentLine = Instantiate(_linePrefab,spawnPos, Quaternion.identity);
+                _currentLine.transform.SetParent(_cam.transform, false);
 
             }
 
             if (Input.GetMouseButton(0))
             {
-                _currentLine.SetPosition(mousePos);
+                Vector3 drawPos = mousePos;
+                drawPos.y -= _cam.transform.position.y;
+                _currentLine.SetPosition(drawPos);
                 if(_currentLine._renderer.positionCount>99)
                 {
                     StopDrawing();

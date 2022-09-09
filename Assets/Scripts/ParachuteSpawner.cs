@@ -5,6 +5,8 @@ using DG.Tweening;
 
 public class ParachuteSpawner : MonoBehaviour
 {
+    
+
     [SerializeField]
     private Transform _objectParent;
     [SerializeField]
@@ -33,6 +35,10 @@ public class ParachuteSpawner : MonoBehaviour
     private Transform _leftmostPoint;
     private Transform _rightmostPoint;
 
+    
+
+    [SerializeField]
+    private ParachuteMovement _parachuteMovement;
     public void GetObjectPos(LineRenderer renderer)
     {
 
@@ -55,10 +61,21 @@ public class ParachuteSpawner : MonoBehaviour
         
         for (int i = 0; i < _rendererPositions.Length; i++)
         {
-            SpawnAtPos(_rendererPositions[i]);
+            if(i != 0)
+            {
+                if(Vector3.Distance(_rendererPositions[i-1], _rendererPositions[i ])>0.1f)
+                {
+                    SpawnAtPos(_rendererPositions[i]);
+                }
+            }
+            else
+            {
+                SpawnAtPos(_rendererPositions[i]);
+            }
+            
             
            
-            if (i+1 < _rendererPositions.Length) //spawn object if there is too much gap between two
+            if (i+1 < _rendererPositions.Length && _rendererPositions.Length<100) //spawn object if there is too much gap between two
             {
                 float distanceTwoPoints;
                 distanceTwoPoints = Vector3.Distance(_rendererPositions[i], _rendererPositions[i + 1]);
@@ -66,6 +83,7 @@ public class ParachuteSpawner : MonoBehaviour
                 int watcher = 0;
                 while (distanceTwoPoints > 0.2f)
                 {
+                    
                     watcher++;
                     LastPos +=  (_rendererPositions[i + 1] - LastPos) * 0.3f;
                     distanceTwoPoints = Vector3.Distance(LastPos, _rendererPositions[i + 1]);
@@ -75,23 +93,27 @@ public class ParachuteSpawner : MonoBehaviour
                 }
             }
         }
+       
         TweenParachute();
     }
 
-    private Vector3 CalculateMidVector(Vector3 v1,Vector3 v2)
-    {
-        return v1 + v2 / 2;
-    }
+   
 
     private void SpawnAtPos(Vector3 pos)
     {
+        if(pos.x >4.3 || pos.x<-4.3)
+        {
+            return;
+        }
         GameObject tempObject;
         Transform tempObjectTransform;
         tempObject = _lean.Spawn(_objectParent, false);
         tempObjectTransform = tempObject.transform;
 
         tempObjectTransform.localPosition = Vector3.zero;
+        
         tempObjectTransform.localPosition += pos + _positionFixVecotr;
+        tempObjectTransform.localPosition = new Vector3(tempObjectTransform.localPosition.x, tempObjectTransform.localPosition.y, 0);
         tempObjectTransform.localRotation = _objectRot;
 
         
@@ -99,11 +121,13 @@ public class ParachuteSpawner : MonoBehaviour
 
     private void TweenParachute()
     {
-        _objectParent.transform.DOMove(_ParachutePos.position, tweenTime).OnComplete(() => _ropes.SetRopes(_leftmostPoint, _rightmostPoint)); 
-        for(int i = 0;i<_objectParent.childCount;i++)
+        _ropes.ResetRopes();
+        _objectParent.transform.DOLocalMove(_ParachutePos.localPosition, tweenTime).OnComplete(() => _ropes.SetRopes(_leftmostPoint, _rightmostPoint));
+       
+        for (int i = 0;i<_objectParent.childCount;i++)
         {
             Transform childObject = _objectParent.GetChild(i);
-
+           
             childObject.transform.DOScale(_objectScale, tweenTime);
 
             if (i ==0)
@@ -121,21 +145,17 @@ public class ParachuteSpawner : MonoBehaviour
                 _rightmostPoint =  childObject;
             }
 
-        }
-       
+        }  
+        _parachuteMovement.AddParachuteForce(_rendererPositions,_rightmostPoint.localPosition.x- _leftmostPoint.localPosition.x);
     }
 
+   
 
     // Start is called before the first frame update
     void Start()
     {
-        
         _objectScale = _halfCirclePrefab.transform.localScale;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+   
 }
